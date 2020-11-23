@@ -79,17 +79,28 @@ bccsp implemtation copy to bccsp folder before rebuild fabric
 
 ## Detail proposal for sdk changes
 
-On fabric sdk side, we need aline with the changes, so that from client to network able to use same crypto alg/crypto cruve etc...
+On fabric sdk side, we need align with the changes, so that from client to network able to use same crypto alg/crypto cruve or tls cert...
 
 ### Detail Proposal for java sdk changes.
+For java SDK, we need refactor `org.hyperledger.fabric.sdk.security` package.
+1. supporting dynamic class loading with a modular crypto service jar package as implementation of `org.hyperledger.fabric.sdk.security`.
+1. the implation should implate for both msp/identity load from cert file.
+1. the implation should implate for tls connection.
 
-As interface defined in https://github.com/hyperledger/fabric-sdk-java/blob/master/src/main/java/org/hyperledger/fabric/sdk/security/CryptoSuite.java
+#### detail changes for `org.hyperledger.fabric.sdk.security`
+step 1: As `org.hyperledger.fabric.sdk.security.certgen` also a factory pattern on design which builder class to create keypair class for tls. we are able to refactor those two class into a factory interface and a impl interface.
+step 2: as all classes in `org.hyperledger.fabric.sdk.security` in factory pattern, a refactor can be made to make this package following factory pattern.
+step 3: the factory of `org.hyperledger.fabric.sdk.security` should support dynamic class load from an external jar file if provided. or use current implementation by default.
 
-and the factory interface defiend https://github.com/hyperledger/fabric-sdk-java/blob/master/src/main/java/org/hyperledger/fabric/sdk/security/CryptoSuiteFactory.java
+#### if someone is going to implate a modular crypto service for java sdk
+step 1: for msp loading, impls interface defined in https://github.com/hyperledger/fabric-sdk-java/blob/master/src/main/java/org/hyperledger/fabric/sdk/security/CryptoSuite.java
+step 2: for tls config, impls new interface defined in step 1 above as refactor result for package `org.hyperledger.fabric.sdk.security.certgen`
+step 3: for class loader, impls factory class defined as steps 3 above as refacotr result for package `org.hyperledger.fabric.sdk.security`
 
-for java, we can enhance the https://github.com/hyperledger/fabric-sdk-java/blob/master/src/main/java/org/hyperledger/fabric/sdk/security/HLSDKJCryptoSuiteFactory.java
-
-supports a dynamic loader way, as `classforname` to support a Modular-crypto-service in jar files. which implements factory and cryptosuite interface.
+#### Drawbacks & A sample solution/workaround
+For java sdk, there some low level code outside fabric java sdk scope but as dependencies, for ex `io.netty`.
+A general solution for this is treating those jar dependencies as interfaces. 
+Modular crypto sevice provider should impl a changes for those jar dependencies by themselves.
 
 # Drawbacks
 [drawbacks]: #drawbacks
